@@ -15,6 +15,7 @@ import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -34,9 +35,9 @@ public class Kmeans extends Configured implements Tool  {
 	private BufferedReader outBufferedReader;
 
 	public static class dMapper
-	extends Mapper<LongWritable, IntWritable, LongWritable, ArrayWritable>{
+	extends Mapper<LongWritable, Text, LongWritable, ArrayWritable>{
 
-		public void map(LongWritable key, IntWritable value, Context context
+		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
 			for (int i = 0; i< k; i++){
 				Double sum = 0.0;
@@ -84,13 +85,13 @@ public class Kmeans extends Configured implements Tool  {
 
 	public static class cReducer
 	extends Reducer<LongWritable, LongWritable, LongWritable, ArrayWritable> {
-		public void reduce(LongWritable key, Iterable<IntWritable> values,
+		public void reduce(LongWritable key, Iterable<LongWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
 			ArrayWritable outValueWritable = new ArrayWritable (DoubleWritable.class);
 			DoubleWritable[] sum = new DoubleWritable[n];
 			int count = 0;
-			for(IntWritable point : values){
+			for(LongWritable point : values){
 				for (int i = 0; i< n; i++){
 					sum[i] = new DoubleWritable(new Double(sum[i].get()) + data.get(point)[i]);
 				}
