@@ -1,175 +1,238 @@
-package kmeans;
+package kmeansMR;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.StringTokenizer;
-import java.util.Scanner; 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.ArrayWritable;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.util.GenericOptionsParser;
-//import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-public class Kmeans {
+public class Kmeans extends Configured implements Tool  {
+	static HashMap<Integer, Double[]> data;
+	static HashMap<Integer, Double[]> prev;
+	static HashMap<Integer, Double[]> centroids;
+	static int k, n;
+	private static FileReader fileReader;
+	private static BufferedReader bufferedReader;
+	private FileReader outFileReader;
+	private BufferedReader outBufferedReader;
 
-  public static class dMapper
-       extends Mapper<IntWritable, IntWritable, IntWritable, IntWritable>{
- //private final static IntWritable temp = new IntWritable();
- //private final static IntWritable j = new IntWritable();
-    
-    @Override
-    public void map(Object key, Object value, Context context
-                    ) throws IOException, InterruptedException {
-    //code
-	//should implement euclidean dist
-	//and return <j,dij>
-	HashMap<Double,Double> temp=new HashMap<Double,Double>();
-	temp.put(i,dij);
-	context.write(j,temp);
-	}
-  }
+	public static class dMapper
+	extends Mapper<IntWritable, IntWritable, IntWritable, ArrayWritable>{
 
-   public static class dReducer
-       extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
-    //private final static IntWritable i = new IntWritable();
-   
-    public void dreduce(Object key, Iterable<HashMap> values,
-                       Context context
-                       ) throws IOException, InterruptedException {
-	//code				
-//find the min distance and return <j,i>	
-	min=0;
-	i=0;
-	for(HashMap temp: values){
-		if(temp[1]<=min){
-			min=temp[1];
-			i=temp[0];
+		public void map(IntWritable key, IntWritable value, Context context
+				) throws IOException, InterruptedException {
+			for (int i = 0; i< k; i++){
+				Double sum = 0.0;
+				for (int j = 0; j< n; j++){
+					sum = sum + Math.pow(data.get(key)[j] - centroids.get(i)[j], 2);
+				}
+				ArrayWritable outValueWritable = new ArrayWritable (DoubleWritable.class);
+				DoubleWritable[] outValue = new DoubleWritable[2];
+				outValue[0] = new DoubleWritable(i);
+				outValue[1] = new DoubleWritable(Math.sqrt(sum));
+				outValueWritable.set(outValue);
+				context.write(key, outValueWritable);
+			}
 		}
 	}
-	context.write(key,i);
-    }
-  }
-  
-   public static class cMapper
-       extends Mapper<DoubleWritable, DoubleWritable, DoubleWritable, DoubleWritable>{
 
-    
-    public void cmap(Object key, Object value, Context context
-                    ) throws IOException, InterruptedException {
-    //code
-	//input is <j,i> from dReducer, exchange to <i,j>change of centroids 
+	public static class dReducer
+	extends Reducer<IntWritable, ArrayWritable, IntWritable, IntWritable> {
+
+		public void reduce(IntWritable key, Iterable<ArrayWritable> values,
+				Context context
+				) throws IOException, InterruptedException {
+			DoubleWritable min = new DoubleWritable(9999999.9);
+			IntWritable i = new IntWritable(0);
+			for(ArrayWritable arr : values){
+				DoubleWritable d = (DoubleWritable) arr.get()[1];
+				if(d.compareTo(min) == -1){
+					min = d;
+					i = (IntWritable) arr.get()[0];
+				}
+			}
+			context.write(key, i);
+		}
 	}
-  }
 
-   public static class cReducer
-       extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
-    
-    public void creduce(Object key, Iterable<IntWritable> values,
-                       Context context
-                       ) throws IOException, InterruptedException {
-    //code
-	// calc. new centroids
+	public static class cMapper
+	extends Mapper<IntWritable, IntWritable, IntWritable, IntWritable>{
+		public void map(IntWritable key, IntWritable value, Context context
+				) throws IOException, InterruptedException {
+			context.write(value, key);
+		}
 	}
-  }
- 
-  //here we need to load the dataset into a hashmap and 
-  //
-   public static void main(String[] args) throws Exception {
-    //code
-	HashMap<Integer, Array> data = new HashMap<Integer, Array>();
-	   for(int i=0; i<= 10000; i++)
-	   {
-  // Open the file
-  FileReader fr = new FileReader("mnist_data.txt"); 
-	   BufferedReader br = new BufferedReader(fr); 
-	   
-  String strLine;
-  //Read File Line By Line
-  while ((strLine = br.readLine()) != null)   {
-  // split the line on your splitter(s)
-     String[] splitted = strLine.split(" "); // 
-  }
-  //Close the input file
-  fr.close();
-     StringTokenizer strtokenizer = new StringTokenizer(strLine);
-	 // loop in order to take all tokens
 
-        while(strtokenizer.hasMoreTokens()){
-			 String token = strLine.nextToken();
-		int something = Integer.parseInt(token);
-        
-		data.put(i,array);
-        }
-		//then initialize centroids again with a hashmap
-		HashMap prev=null;
-		HashMap<Integer,Array> centroids=new HashMap<Integer,Array>();
-		//to fill
-
-		//create mapreduce jobs and chain them
-	Configuration conf = getConf();
-  FileSystem fs = FileSystem.get(conf);
-  Job job = new Job(conf, "dJob");
-  job.setJarByClass(Kmeans.class);
-
-  job.setMapperClass(dMapper.class);
-  job.setReducerClass(dReducer.class);
-
-  //job.setOutputKeyClass(Text.class);
-  //job.setOutputValueClass(IntWritable.class);
-
-  //job.setInputFormatClass(TextInputFormat.class);
-  //job.setOutputFormatClass(TextOutputFormat.class);
-
-  FileInputFormat.addInputPath(job, new Path(args[2]));
-  FileOutputFormat.setOutputPath(job, new Path(OUTPUT_PATH));
-  
-  //job.waitForCompletion(true);
-
-  /*
-   * Job 2
-   */
-  
-  Job job2 = new Job(conf, "cJob");
-  job2.setJarByClass(Kmeans.class);
-
-  job2.setMapperClass(cMapper.class);
-  job2.setReducerClass(cReducer.class);
-
-  //job2.setOutputKeyClass(Text.class);
-  //job2.setOutputValueClass(Text.class);
-
-  //job2.setInputFormatClass(TextInputFormat.class);
-  //job2.setOutputFormatClass(TextOutputFormat.class);
-
-  FileInputFormat.addInputPath(job2, new Path(OUTPUT_PATH));
-  FileOutputFormat.setOutputPath(job2, new Path(args[1]));
-  job2.addDependingJob(job);
-  //return job2.waitForCompletion(true) ? 0 : 1;
- 
- if (args.length != 2) {
-   System.err.println("Enter valid number of arguments <Inputdirectory>  <Outputlocation>");
-   System.exit(0);
-  }
-  ToolRunner.run(new Configuration(), new ChainJobs(), args);
- 
-	//finally implement convergence condition and create output directory to load the results
-	//remember the inputs should be passed as args
-		
-	
+	public static class cReducer
+	extends Reducer<IntWritable, IntWritable, IntWritable, ArrayWritable> {
+		public void reduce(IntWritable key, Iterable<IntWritable> values,
+				Context context
+				) throws IOException, InterruptedException {
+			ArrayWritable outValueWritable = new ArrayWritable (DoubleWritable.class);
+			DoubleWritable[] sum = new DoubleWritable[n];
+			int count = 0;
+			for(IntWritable point : values){
+				for (int i = 0; i< n; i++){
+					sum[i] = new DoubleWritable(new Double(sum[i].get()) + data.get(point)[i]);
+				}
+				count++;
+			}
+			for (int i = 0; i< n; i++){
+				sum[i] = new DoubleWritable(new Double(sum[i].get())/count);
+			}
+			outValueWritable.set(sum);
+			context.write(key, outValueWritable);
+		}
 	}
-   }
+
+	//here we need to load the dataset into a hashmap
+	public static void main(String[] args) throws Exception {
+		if (args.length != 4) {
+			System.err.println("Invalid arguments");
+			System.out.println("Arguments: \n \t k - number of clusters \n \t n - number of dimensions \n \t input Directory \n \t Output Directory");
+			System.exit(0);
+		}
+
+		// load arguments
+		k = Integer.parseInt(args[0]);
+		n = Integer.parseInt(args[1]);
+
+		// load data
+		data = new HashMap<Integer, Double[]>();
+
+		fileReader = new FileReader("mnist_data.txt");
+		bufferedReader = new BufferedReader(fileReader);
+		String strLine = "";
+		//Read File Line By Line
+		int key = 1;
+		while ((strLine = bufferedReader.readLine()) != null)   {
+			// split the line on your splitter(s)
+			String[] splitted = strLine.split(" ");
+			Double[] value = new Double[n];
+			for (int count = 0; count < n; count++){
+				Double d = new Double(Double.parseDouble(splitted[count]));
+				value[count] = d;
+			}
+			data.put(key, value);
+			key++;
+		}
+		//Close the input file
+		fileReader.close();
+		bufferedReader.close();
+
+		//Initialize Centroids again with a HashMap
+		prev=null;
+		centroids=new HashMap<Integer, Double[]>();
+		for (int i = 0 ; i<k; i++){
+			Double[] centroid = new Double[n];
+			for (int j = 0; j<n;j++){
+				centroid[j] = new Double(i+1);
+			}
+			centroids.put(i+1, centroid);
+		}
+		ToolRunner.run(new Configuration(), new Kmeans(), args);
+	}
+
+	@Override
+	public int run(String[] args) throws Exception {
+		int count = 0 ;
+		boolean isConverged = false;
+		while(!isConverged){
+			Configuration conf = new Configuration();
+			Job djob = Job.getInstance(conf, "distanceMR"+count);
+			djob.setJarByClass(Kmeans.class);
+			djob.setMapperClass(dMapper.class);
+			djob.setCombinerClass(dReducer.class);
+			djob.setReducerClass(dReducer.class);
+			djob.setOutputKeyClass(IntWritable.class);
+			djob.setOutputValueClass(IntWritable.class);
+			FileInputFormat.addInputPath(djob, new Path(args[2]));
+			FileOutputFormat.setOutputPath(djob, new Path("dOutput"+count));
+			djob.waitForCompletion(true);
+
+			Job cjob = Job.getInstance(conf, "centroidMR"+count);
+			cjob.setJarByClass(Kmeans.class);
+			cjob.setMapperClass(cMapper.class);
+			cjob.setCombinerClass(cReducer.class);
+			cjob.setReducerClass(cReducer.class);
+			cjob.setOutputKeyClass(IntWritable.class);
+			cjob.setOutputValueClass(ArrayWritable.class);
+			FileInputFormat.addInputPath(cjob, new Path("dOutput"+count));
+			FileOutputFormat.setOutputPath(cjob, new Path("cOutput"+count));
+			cjob.waitForCompletion(true);
+			cjob.waitForCompletion(true);
+
+			prev = centroids;
+			centroids = new HashMap<Integer, Double[]>();
+			
+			File folder = new File("cOutput"+count);
+			File[] listOfFiles = folder.listFiles();
+			for (int i = 0; i < listOfFiles.length; i++) {
+				File file = listOfFiles[i];
+				if (file.isFile()) {
+					this.outFileReader = new FileReader(file);
+					this.outBufferedReader = new BufferedReader(this.outFileReader);
+					String strLine = "";
+					//Read File Line By Line
+					while ((strLine = this.outBufferedReader.readLine()) != null)   {
+						// split the line on your splitter(s)
+						String[] splitted = strLine.split(" ");
+						Double[] value = new Double[n];
+						for (int j = 0; j < n; j++){
+							Double d = new Double(Double.parseDouble(splitted[j+1]));
+							value[j] = d;
+						}
+						centroids.put(Integer.parseInt(splitted[0]), value);
+					}
+					//Close the input file
+					this.outFileReader.close();
+					this.outBufferedReader.close();
+				}
+			}
+			isConverged = true;
+			if (count != 0){
+				for (int i=0; i<k; i++){
+					for (int j = 0; j<n; j++){
+						if(centroids.get(i)[j] != prev.get(i)[j]){
+							isConverged = false;
+							break;
+						}
+					}
+					if (!isConverged){
+						break;
+					}
+				}
+			} else{
+				isConverged = false;
+			}
+			count++;
+		}
+		// move files from one directory to another
+		java.nio.file.Path FROM = Paths.get("cOutput"+count);
+	    java.nio.file.Path TO = Paths.get(args[3]);
+		CopyOption[] options = new CopyOption[]{
+			      StandardCopyOption.REPLACE_EXISTING,
+			      StandardCopyOption.COPY_ATTRIBUTES
+			    }; 
+		Files.copy(FROM, TO, options);
+		return 1;
+	}
 }
