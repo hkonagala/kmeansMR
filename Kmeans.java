@@ -16,6 +16,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -35,9 +36,9 @@ public class Kmeans extends Configured implements Tool  {
 	private BufferedReader outBufferedReader;
 
 	public static class dMapper
-	extends Mapper<IntWritable, IntWritable, IntWritable, ArrayWritable>{
+	extends Mapper<LongWritable, IntWritable, LongWritable, ArrayWritable>{
 
-		public void map(IntWritable key, IntWritable value, Context context
+		public void map(LongWritable key, IntWritable value, Context context
 				) throws IOException, InterruptedException {
 			for (int i = 0; i< k; i++){
 				Double sum = 0.0;
@@ -46,7 +47,7 @@ public class Kmeans extends Configured implements Tool  {
 				}
 				ArrayWritable outValueWritable = new ArrayWritable (DoubleWritable.class);
 				DoubleWritable[] outValue = new DoubleWritable[2];
-				outValue[0] = new DoubleWritable(i);
+				outValue[0] = new DoubleWritable((new Double(i)).doubleValue());
 				outValue[1] = new DoubleWritable(Math.sqrt(sum));
 				outValueWritable.set(outValue);
 				context.write(key, outValueWritable);
@@ -55,13 +56,13 @@ public class Kmeans extends Configured implements Tool  {
 	}
 
 	public static class dReducer
-	extends Reducer<IntWritable, ArrayWritable, IntWritable, IntWritable> {
+	extends Reducer<LongWritable, ArrayWritable, LongWritable, IntWritable> {
 
-		public void reduce(IntWritable key, Iterable<ArrayWritable> values,
+		public void reduce(LongWritable key, Iterable<ArrayWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
-			DoubleWritable min = new DoubleWritable(9999999.9);
-			IntWritable i = new IntWritable(0);
+			DoubleWritable min = new DoubleWritable(new Double(999.9));
+			IntWritable i = new IntWritable(Integer.parseInt("0"));
 			for(ArrayWritable arr : values){
 				DoubleWritable d = (DoubleWritable) arr.get()[1];
 				if(d.compareTo(min) == -1){
@@ -74,16 +75,18 @@ public class Kmeans extends Configured implements Tool  {
 	}
 
 	public static class cMapper
-	extends Mapper<IntWritable, IntWritable, IntWritable, IntWritable>{
-		public void map(IntWritable key, IntWritable value, Context context
+	extends Mapper<LongWritable, IntWritable, LongWritable, LongWritable>{
+		public void map(LongWritable key, IntWritable value, Context context
 				) throws IOException, InterruptedException {
-			context.write(value, key);
+			Long longValue = (long) value.get();
+			LongWritable longWritableValue = new LongWritable(longValue);
+			context.write(longWritableValue, key);
 		}
 	}
 
 	public static class cReducer
-	extends Reducer<IntWritable, IntWritable, IntWritable, ArrayWritable> {
-		public void reduce(IntWritable key, Iterable<IntWritable> values,
+	extends Reducer<LongWritable, LongWritable, LongWritable, ArrayWritable> {
+		public void reduce(LongWritable key, Iterable<IntWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
 			ArrayWritable outValueWritable = new ArrayWritable (DoubleWritable.class);
@@ -103,7 +106,6 @@ public class Kmeans extends Configured implements Tool  {
 		}
 	}
 
-	//here we need to load the dataset into a hashmap
 	public static void main(String[] args) throws Exception {
 		if (args.length != 4) {
 			System.err.println("Invalid arguments");
