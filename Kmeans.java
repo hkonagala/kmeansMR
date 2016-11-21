@@ -46,7 +46,7 @@ public class Kmeans extends Configured implements Tool  {
 				outValue[0] = new DoubleWritable((new Double(i)).doubleValue());
 				outValue[1] = new DoubleWritable(Math.sqrt(sum));
 				outValueWritable.set(outValue);
-				LongWritable outKey = new LongWritable(i);
+				LongWritable outKey = new LongWritable((new Long(i)).longValue());
 				context.write(outKey, outValueWritable);
 			}
 		}
@@ -140,6 +140,7 @@ public class Kmeans extends Configured implements Tool  {
 		//Initialize Centroids again with a HashMap
 		prev=null;
 		File centroidsFile = new File("Centroids");
+		
 		centroids=new HashMap<Integer, Double[]>();
 		for (int i = 0 ; i<k; i++){
 			Double[] centroid = new Double[n];
