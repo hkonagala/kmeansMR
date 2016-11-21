@@ -43,7 +43,7 @@ public class Kmeans extends Configured implements Tool  {
 				}
 				ArrayWritable outValueWritable = new ArrayWritable (DoubleWritable.class);
 				DoubleWritable[] outValue = new DoubleWritable[2];
-				outValue[0] = new DoubleWritable((new Double(i)).doubleValue());
+				outValue[0] = new DoubleWritable((new Double(key.get())).doubleValue());
 				outValue[1] = new DoubleWritable(Math.sqrt(sum));
 				outValueWritable.set(outValue);
 				LongWritable outKey = new LongWritable((new Long(i)).longValue());
@@ -165,8 +165,10 @@ public class Kmeans extends Configured implements Tool  {
 			djob.setMapperClass(dMapper.class);
 			djob.setCombinerClass(dReducer.class);
 			djob.setReducerClass(dReducer.class);
-			djob.setOutputKeyClass(IntWritable.class);
-			djob.setOutputValueClass(IntWritable.class);
+			djob.setMapOutputKeyClass(LongWritable.class);
+			djob.setMapOutputValueClass(ArrayWritable.class);
+			djob.setOutputKeyClass(LongWritable.class);
+			djob.setOutputValueClass(ArrayWritable.class);
 			if (count == 0){
 				FileInputFormat.addInputPath(djob, new Path("harika/kmeans/centroids"));
 			} else{
@@ -180,6 +182,8 @@ public class Kmeans extends Configured implements Tool  {
 			cjob.setMapperClass(cMapper.class);
 			cjob.setCombinerClass(cReducer.class);
 			cjob.setReducerClass(cReducer.class);
+			cjob.setMapOutputKeyClass(LongWritable.class);
+			cjob.setMapOutputValueClass(LongWritable.class);
 			cjob.setOutputKeyClass(IntWritable.class);
 			cjob.setOutputValueClass(ArrayWritable.class);
 			FileInputFormat.addInputPath(cjob, new Path("dOutput"+count));
@@ -190,7 +194,7 @@ public class Kmeans extends Configured implements Tool  {
 			prev = centroids;
 			centroids = new HashMap<Integer, Double[]>();
 
-			Path ofile = new Path("cOutput"+count);
+			Path ofile = new Path("cOutput"+count+"/part-r-00000");
 			FileSystem fs = FileSystem.get(new Configuration());
 			this.br = new BufferedReader(new InputStreamReader(
 					fs.open(ofile)));
