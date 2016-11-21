@@ -2,14 +2,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.CopyOption;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.DoubleWritable;
@@ -31,25 +29,25 @@ public class Kmeans extends Configured implements Tool  {
 	static int k, n;
 	private static FileReader fileReader;
 	private static BufferedReader bufferedReader;
-	private FileReader outFileReader;
-	private BufferedReader outBufferedReader;
+	private BufferedReader br;
 
 	public static class dMapper
 	extends Mapper<LongWritable, Text, LongWritable, ArrayWritable>{
 
 		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
-			for (int i = 0; i< k; i++){
+			for (int i = 0; i< 10000; i++){
 				Double sum = 0.0;
 				for (int j = 0; j< n; j++){
-					sum = sum + Math.pow(data.get(key)[j] - centroids.get(i)[j], 2);
+					sum = sum + Math.pow(data.get(i)[j] - centroids.get(key)[j], 2);
 				}
 				ArrayWritable outValueWritable = new ArrayWritable (DoubleWritable.class);
 				DoubleWritable[] outValue = new DoubleWritable[2];
 				outValue[0] = new DoubleWritable((new Double(i)).doubleValue());
 				outValue[1] = new DoubleWritable(Math.sqrt(sum));
 				outValueWritable.set(outValue);
-				context.write(key, outValueWritable);
+				LongWritable outKey = new LongWritable(i);
+				context.write(outKey, outValueWritable);
 			}
 		}
 	}
@@ -141,6 +139,7 @@ public class Kmeans extends Configured implements Tool  {
 
 		//Initialize Centroids again with a HashMap
 		prev=null;
+		File centroidsFile = new File("Centroids");
 		centroids=new HashMap<Integer, Double[]>();
 		for (int i = 0 ; i<k; i++){
 			Double[] centroid = new Double[n];
@@ -157,6 +156,8 @@ public class Kmeans extends Configured implements Tool  {
 		int count = 0 ;
 		boolean isConverged = false;
 		while(!isConverged){
+
+
 			Configuration conf = new Configuration();
 			Job djob = Job.getInstance(conf, "distanceMR"+count);
 			djob.setJarByClass(Kmeans.class);
@@ -165,7 +166,11 @@ public class Kmeans extends Configured implements Tool  {
 			djob.setReducerClass(dReducer.class);
 			djob.setOutputKeyClass(IntWritable.class);
 			djob.setOutputValueClass(IntWritable.class);
-			FileInputFormat.addInputPath(djob, new Path(args[2]));
+			if (count == 0){
+				FileInputFormat.addInputPath(djob, new Path("harika/kmeans/centroids"));
+			} else{
+				FileInputFormat.addInputPath(djob, new Path("cOutput"+(count-1)));
+			}
 			FileOutputFormat.setOutputPath(djob, new Path("dOutput"+count));
 			djob.waitForCompletion(true);
 
@@ -183,31 +188,24 @@ public class Kmeans extends Configured implements Tool  {
 
 			prev = centroids;
 			centroids = new HashMap<Integer, Double[]>();
-			
-			File folder = new File("cOutput"+count);
-			File[] listOfFiles = folder.listFiles();
-			for (int i = 0; i < listOfFiles.length; i++) {
-				File file = listOfFiles[i];
-				if (file.isFile()) {
-					this.outFileReader = new FileReader(file);
-					this.outBufferedReader = new BufferedReader(this.outFileReader);
-					String strLine = "";
-					//Read File Line By Line
-					while ((strLine = this.outBufferedReader.readLine()) != null)   {
-						// split the line on your splitter(s)
-						String[] splitted = strLine.split(" ");
-						Double[] value = new Double[n];
-						for (int j = 0; j < n; j++){
-							Double d = new Double(Double.parseDouble(splitted[j+1]));
-							value[j] = d;
-						}
-						centroids.put(Integer.parseInt(splitted[0]), value);
-					}
-					//Close the input file
-					this.outFileReader.close();
-					this.outBufferedReader.close();
+
+			Path ofile = new Path("cOutput"+count);
+			FileSystem fs = FileSystem.get(new Configuration());
+			this.br = new BufferedReader(new InputStreamReader(
+					fs.open(ofile)));
+
+			String strLine;
+			while ((strLine = this.br.readLine()) != null)   {
+				String[] splitted = strLine.split(" ");
+				Double[] value = new Double[n];
+				for (int j = 0; j < n; j++){
+					Double d = new Double(Double.parseDouble(splitted[j+1]));
+					value[j] = d;
 				}
+				centroids.put(Integer.parseInt(splitted[0]), value);
 			}
+			this.br.close();
+
 			isConverged = true;
 			if (count != 0){
 				for (int i=0; i<k; i++){
@@ -227,13 +225,13 @@ public class Kmeans extends Configured implements Tool  {
 			count++;
 		}
 		// move files from one directory to another
-		java.nio.file.Path FROM = Paths.get("cOutput"+count);
-	    java.nio.file.Path TO = Paths.get(args[3]);
+		/*java.nio.file.Path FROM = Paths.get("cOutput"+count);
+		java.nio.file.Path TO = Paths.get(args[3]);
 		CopyOption[] options = new CopyOption[]{
-			      StandardCopyOption.REPLACE_EXISTING,
-			      StandardCopyOption.COPY_ATTRIBUTES
-			    }; 
-		Files.copy(FROM, TO, options);
+				StandardCopyOption.REPLACE_EXISTING,
+				StandardCopyOption.COPY_ATTRIBUTES
+		}; 
+		Files.copy(FROM, TO, options);*/
 		return 1;
 	}
 }
