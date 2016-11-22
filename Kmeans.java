@@ -98,23 +98,23 @@ public class Kmeans extends Configured implements Tool  {
 		public void reduce(LongWritable key, Iterable<LongWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
-			DoubleArrayWritable outValueWritable = new DoubleArrayWritable ();
-			DoubleWritable[] sum = new DoubleWritable[n];
+			Double[] sum = new Double[n];
+			for (int i = 0; i< n; i++){
+				sum[i] = 0.0;
+			}
 			int count = 0;
 			for(LongWritable point : values){
 				for (int i = 0; i< n; i++){
-					sum[i] = new DoubleWritable(new Double(sum[i].get()) + data.get(point)[i]);
+					sum[i] = sum[i] + data.get(point)[i];
 				}
 				count++;
 			}
-			String outString = "";
+			StringBuilder outString = new StringBuilder("");
 			for (int i = 0; i< n; i++){
-				sum[i] = new DoubleWritable(new Double(sum[i].get())/count);
-				outString = outString + " 1 " + (new Double(sum[i].get())).toString();
-				System.out.println("*************Out String is : " + outString);
+				sum[i] = sum[i]/count;
+				outString.append(" 1 " + sum[i].toString());
 			}
-			outValueWritable.set(sum);
-			context.write(key, new Text(outString));
+			context.write(key, new Text(outString.toString()));
 		}
 	}
 
