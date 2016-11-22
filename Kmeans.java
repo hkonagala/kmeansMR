@@ -118,16 +118,16 @@ public class Kmeans extends Configured implements Tool  {
 				sum[i] = 0.0;
 			}
 			int count = 0;
-			for(LongWritable point : values){
+			/*for(LongWritable point : values){
 				for (int i = 0; i< n; i++){
 					sum[i] = sum[i] + data.get(Integer.parseInt(new Long(point.get()).toString()))[i];
 				}
 				count++;
-			}
+			}*/
 			String outString = "";
 			for (int i = 0; i< n; i++){
-				sum[i] = sum[i]/count;
-				outString += " " + sum[i].toString();
+				//sum[i] = sum[i]/count;
+				outString += " 1 " + sum[i].toString();
 			}
 			context.write(key, new Text(outString.toString().trim()));
 		}
