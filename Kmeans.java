@@ -31,8 +31,14 @@ public class Kmeans extends Configured implements Tool  {
 	private static BufferedReader bufferedReader;
 	private BufferedReader br;
 
+	public static class DoubleArrayWritable extends ArrayWritable {
+		public DoubleArrayWritable() {
+			super(DoubleWritable.class);
+		}
+	}
+
 	public static class dMapper
-	extends Mapper<LongWritable, Text, LongWritable, ArrayWritable>{
+	extends Mapper<LongWritable, Text, LongWritable, DoubleArrayWritable>{
 
 		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
@@ -41,7 +47,7 @@ public class Kmeans extends Configured implements Tool  {
 				for (int j = 0; j< n; j++){
 					sum = sum + Math.pow(data.get(i)[j] - centroids.get(key)[j], 2);
 				}
-				ArrayWritable outValueWritable = new ArrayWritable (DoubleWritable.class);
+				DoubleArrayWritable outValueWritable = new DoubleArrayWritable ();
 				DoubleWritable[] outValue = new DoubleWritable[2];
 				outValue[0] = new DoubleWritable((new Double(key.get())).doubleValue());
 				outValue[1] = new DoubleWritable(Math.sqrt(sum));
@@ -53,14 +59,14 @@ public class Kmeans extends Configured implements Tool  {
 	}
 
 	public static class dReducer
-	extends Reducer<LongWritable, ArrayWritable, LongWritable, IntWritable> {
+	extends Reducer<LongWritable, DoubleArrayWritable, LongWritable, IntWritable> {
 
-		public void reduce(LongWritable key, Iterable<ArrayWritable> values,
+		public void reduce(LongWritable key, Iterable<DoubleArrayWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
 			DoubleWritable min = new DoubleWritable(new Double(999.9));
 			IntWritable i = new IntWritable(Integer.parseInt("0"));
-			for(ArrayWritable arr : values){
+			for(DoubleArrayWritable arr : values){
 				DoubleWritable d = (DoubleWritable) arr.get()[1];
 				if(d.compareTo(min) == -1){
 					min = d;
@@ -82,11 +88,11 @@ public class Kmeans extends Configured implements Tool  {
 	}
 
 	public static class cReducer
-	extends Reducer<LongWritable, LongWritable, LongWritable, ArrayWritable> {
+	extends Reducer<LongWritable, LongWritable, LongWritable, DoubleArrayWritable> {
 		public void reduce(LongWritable key, Iterable<LongWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
-			ArrayWritable outValueWritable = new ArrayWritable (DoubleWritable.class);
+			DoubleArrayWritable outValueWritable = new DoubleArrayWritable ();
 			DoubleWritable[] sum = new DoubleWritable[n];
 			int count = 0;
 			for(LongWritable point : values){
@@ -140,7 +146,7 @@ public class Kmeans extends Configured implements Tool  {
 		//Initialize Centroids again with a HashMap
 		prev=null;
 		File centroidsFile = new File("Centroids");
-		
+
 		centroids=new HashMap<Integer, Double[]>();
 		for (int i = 0 ; i<k; i++){
 			Double[] centroid = new Double[n];
@@ -166,9 +172,9 @@ public class Kmeans extends Configured implements Tool  {
 			djob.setCombinerClass(dReducer.class);
 			djob.setReducerClass(dReducer.class);
 			djob.setMapOutputKeyClass(LongWritable.class);
-			djob.setMapOutputValueClass(ArrayWritable.class);
+			djob.setMapOutputValueClass(DoubleArrayWritable.class);
 			djob.setOutputKeyClass(LongWritable.class);
-			djob.setOutputValueClass(ArrayWritable.class);
+			djob.setOutputValueClass(DoubleArrayWritable.class);
 			if (count == 0){
 				FileInputFormat.addInputPath(djob, new Path("harika/kmeans/centroids"));
 			} else{
@@ -185,7 +191,7 @@ public class Kmeans extends Configured implements Tool  {
 			cjob.setMapOutputKeyClass(LongWritable.class);
 			cjob.setMapOutputValueClass(LongWritable.class);
 			cjob.setOutputKeyClass(IntWritable.class);
-			cjob.setOutputValueClass(ArrayWritable.class);
+			cjob.setOutputValueClass(DoubleArrayWritable.class);
 			FileInputFormat.addInputPath(cjob, new Path("dOutput"+count));
 			FileOutputFormat.setOutputPath(cjob, new Path("cOutput"+count));
 			cjob.waitForCompletion(true);
