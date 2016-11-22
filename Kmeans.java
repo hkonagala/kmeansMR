@@ -64,9 +64,13 @@ public class Kmeans extends Configured implements Tool  {
 		}
 	}
 
+	// distance calculator reducer
+	// finds the nearest centroid and 
+	// gives the output: key: datapointindex, value: centroidindex
 	public static class dReducer
 	extends Reducer<LongWritable, DoubleArrayWritable, LongWritable, IntWritable> {
 
+		@Override
 		public void reduce(LongWritable key, Iterable<DoubleArrayWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
@@ -83,6 +87,7 @@ public class Kmeans extends Configured implements Tool  {
 		}
 	}
 
+	// Centroid calculator 
 	public static class cMapper
 	extends Mapper<LongWritable, Text, LongWritable, LongWritable>{
 		@Override
@@ -113,13 +118,12 @@ public class Kmeans extends Configured implements Tool  {
 				}
 				count++;
 			}
-			StringBuffer outString = new StringBuffer();
+			String outString = "";
 			for (int i = 0; i< n; i++){
 				sum[i] = sum[i]/count;
-				outString.append(" 1 ");
-				outString.append(sum[i].toString());
+				outString += " " + sum[i].toString();
 			}
-			context.write(key, new Text(outString.toString()));
+			context.write(key, new Text(outString.toString().trim()));
 		}
 	}
 
