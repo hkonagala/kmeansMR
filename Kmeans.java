@@ -124,15 +124,13 @@ public class Kmeans extends Configured implements Tool  {
 				}
 				count++;
 			}*/
-			String outString = "";
-			String outString1 = "";
-			String outString2 = "";
+			StringBuffer outString = new StringBuffer();
 			for (int i = 0; i< n; i++){
 				//sum[i] = sum[i]/count;
-				outString1 = outString.concat(" 1 ");
-				outString2 = outString.concat(sum[i].toString());
+				outString.append(" 1 ");
+				outString.append(sum[i].toString());
 			}
-			context.write(key, new Text(outString2.trim()));
+			context.write(key, new Text(outString.toString().trim()));
 		}
 	}
 
