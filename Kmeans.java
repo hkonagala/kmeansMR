@@ -1,5 +1,4 @@
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -114,7 +113,7 @@ public class Kmeans extends Configured implements Tool  {
 				sum[i] = sum[i]/count;
 				outString.append(" 1 " + sum[i].toString());
 			}
-			context.write(key, new Text("Count is: " + count + " " + "Sum 1 is: " + sum[1]+ " Value is : " + outString.toString()));
+			context.write(key, new Text("Count is: " + count + " " + "Sum 1 is: " + sum[1].toString()+ " Value is : " + outString.toString()));
 		}
 	}
 
@@ -154,7 +153,6 @@ public class Kmeans extends Configured implements Tool  {
 
 		//Initialize Centroids again with a HashMap
 		prev=null;
-		File centroidsFile = new File("Centroids");
 
 		centroids=new HashMap<Integer, Double[]>();
 		for (int i = 0 ; i<k; i++){
