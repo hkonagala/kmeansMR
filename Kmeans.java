@@ -169,7 +169,7 @@ public class Kmeans extends Configured implements Tool  {
 			Job djob = Job.getInstance(conf, "distanceMR"+count);
 			djob.setJarByClass(Kmeans.class);
 			djob.setMapperClass(dMapper.class);
-			djob.setCombinerClass(dReducer.class);
+			//djob.setCombinerClass(dReducer.class);
 			djob.setReducerClass(dReducer.class);
 			djob.setMapOutputKeyClass(LongWritable.class);
 			djob.setMapOutputValueClass(DoubleArrayWritable.class);
@@ -186,7 +186,7 @@ public class Kmeans extends Configured implements Tool  {
 			Job cjob = Job.getInstance(conf, "centroidMR"+count);
 			cjob.setJarByClass(Kmeans.class);
 			cjob.setMapperClass(cMapper.class);
-			cjob.setCombinerClass(cReducer.class);
+			//cjob.setCombinerClass(cReducer.class);
 			cjob.setReducerClass(cReducer.class);
 			cjob.setMapOutputKeyClass(LongWritable.class);
 			cjob.setMapOutputValueClass(LongWritable.class);
@@ -194,7 +194,6 @@ public class Kmeans extends Configured implements Tool  {
 			cjob.setOutputValueClass(DoubleArrayWritable.class);
 			FileInputFormat.addInputPath(cjob, new Path("dOutput"+count));
 			FileOutputFormat.setOutputPath(cjob, new Path("cOutput"+count));
-			cjob.waitForCompletion(true);
 			cjob.waitForCompletion(true);
 
 			prev = centroids;
