@@ -1,4 +1,6 @@
 import java.io.BufferedReader;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -14,6 +16,7 @@ import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -31,8 +34,44 @@ public class Kmeans extends Configured implements Tool  {
 	private static BufferedReader bufferedReader;
 	private BufferedReader br;
 
+	public static class DoubleArrayWritable implements Writable {
+		private Double[] doubleData;
+		public DoubleArrayWritable() {
+		}
+		public DoubleArrayWritable(Double[] data) {
+			this.doubleData = data;
+		}
+		public Double[] getData() {
+			return this.doubleData;
+		}
+		public void setData(Double[] data) {
+			this.doubleData = data;
+		}
+		public void write(DataOutput out) throws IOException {
+			int length = 0;
+			if(this.doubleData != null) {
+				length = this.doubleData.length;
+			}
+
+			out.writeInt(length);
+
+			for(int i = 0; i < length; i++) {
+				out.writeDouble(this.doubleData[i]);
+			}
+		}
+		public void readFields(DataInput in) throws IOException {
+			int length = in.readInt();
+
+			this.doubleData = new Double[length];
+
+			for(int i = 0; i < length; i++) {
+				this.doubleData[i] = in.readDouble();
+			}
+		}
+	}
+
 	public static class dMapper
-	extends Mapper<LongWritable, Text, LongWritable, ArrayWritable>{
+	extends Mapper<LongWritable, Text, LongWritable, Writable>{
 
 		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
@@ -41,11 +80,10 @@ public class Kmeans extends Configured implements Tool  {
 				for (int j = 0; j< n; j++){
 					sum = sum + Math.pow(data.get(i)[j] - centroids.get(key)[j], 2);
 				}
-				ArrayWritable outValueWritable = new ArrayWritable (DoubleWritable.class);
-				DoubleWritable[] outValue = new DoubleWritable[2];
-				outValue[0] = new DoubleWritable((new Double(key.get())).doubleValue());
-				outValue[1] = new DoubleWritable(Math.sqrt(sum));
-				outValueWritable.set(outValue);
+				Double[] outValue = new Double[2];
+				outValue[0] = new Double(key.get());
+				outValue[1] = new Double(Math.sqrt(sum));
+				DoubleArrayWritable outValueWritable = new DoubleArrayWritable(outValue);
 				LongWritable outKey = new LongWritable((new Long(i)).longValue());
 				context.write(outKey, outValueWritable);
 			}
@@ -55,16 +93,16 @@ public class Kmeans extends Configured implements Tool  {
 	public static class dReducer
 	extends Reducer<LongWritable, ArrayWritable, LongWritable, IntWritable> {
 
-		public void reduce(LongWritable key, Iterable<ArrayWritable> values,
+		public void reduce(LongWritable key, Iterable<DoubleArrayWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
 			DoubleWritable min = new DoubleWritable(new Double(999.9));
 			IntWritable i = new IntWritable(Integer.parseInt("0"));
-			for(ArrayWritable arr : values){
-				DoubleWritable d = (DoubleWritable) arr.get()[1];
+			for(DoubleArrayWritable arr : values){
+				DoubleWritable d = new DoubleWritable(arr.getData()[1]);
 				if(d.compareTo(min) == -1){
 					min = d;
-					i = (IntWritable) arr.get()[0];
+					i = new IntWritable((arr.getData()[0]).intValue());
 				}
 			}
 			context.write(key, i);
@@ -140,7 +178,7 @@ public class Kmeans extends Configured implements Tool  {
 		//Initialize Centroids again with a HashMap
 		prev=null;
 		File centroidsFile = new File("Centroids");
-		
+
 		centroids=new HashMap<Integer, Double[]>();
 		for (int i = 0 ; i<k; i++){
 			Double[] centroid = new Double[n];
@@ -166,7 +204,7 @@ public class Kmeans extends Configured implements Tool  {
 			djob.setCombinerClass(dReducer.class);
 			djob.setReducerClass(dReducer.class);
 			djob.setMapOutputKeyClass(LongWritable.class);
-			djob.setMapOutputValueClass(ArrayWritable.class);
+			djob.setMapOutputValueClass(Writable.class);
 			djob.setOutputKeyClass(LongWritable.class);
 			djob.setOutputValueClass(ArrayWritable.class);
 			if (count == 0){
