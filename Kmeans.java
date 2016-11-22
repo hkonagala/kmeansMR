@@ -26,10 +26,12 @@ public class Kmeans extends Configured implements Tool  {
 	static HashMap<Integer, Double[]> data;
 	static HashMap<Integer, Double[]> prev;
 	static HashMap<Integer, Double[]> centroids;
-	static int k, n;
+	static int k=10;
+	static int n=784;
 	private static FileReader fileReader;
 	private static BufferedReader bufferedReader;
 	private BufferedReader br;
+	private Logger mainLogger = Logger.getLogger(Kmeans.class);
 
 	// Own class to pass double array from map to reduce
 	public static class DoubleArrayWritable extends ArrayWritable {
@@ -142,6 +144,7 @@ public class Kmeans extends Configured implements Tool  {
 	}
 
 	public static void main(String[] args) throws Exception {
+		
 		if (args.length != 4) {
 			System.err.println("Invalid arguments");
 			System.out.println("Arguments: \n \t k - number of clusters \n \t n - number of dimensions \n \t input Directory \n \t Output Directory");
@@ -150,7 +153,7 @@ public class Kmeans extends Configured implements Tool  {
 
 		// load arguments
 		k = Integer.parseInt(args[0]);
-		n = Integer.parseInt(args[1]);
+		n = 784;
 
 		// load data
 		data = new HashMap<Integer, Double[]>();
