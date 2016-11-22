@@ -20,6 +20,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Logger;
 
 public class Kmeans extends Configured implements Tool  {
 	static HashMap<Integer, Double[]> data;
@@ -109,6 +110,7 @@ public class Kmeans extends Configured implements Tool  {
 	// output: Key: centroidindex, value: [new centroid point value]
 	public static class cReducer
 	extends Reducer<LongWritable, LongWritable, LongWritable, Text> {
+		private Logger logger = Logger.getLogger(cReducer.class);
 		@Override
 		public void reduce(LongWritable key, Iterable<LongWritable> values,
 				Context context
@@ -130,7 +132,8 @@ public class Kmeans extends Configured implements Tool  {
 				outString.append(" 1 ");
 				outString.append(sum[i].toString());
 			}
-			context.write(key, new Text("1 2 3 4 5 6 7 8 9"));
+			this.logger.error("CREDUCER OUTSTRING: "+ outString.toString().trim());
+			context.write(key, new Text(outString.toString().trim()));
 		}
 	}
 
