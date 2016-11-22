@@ -105,7 +105,7 @@ public class Kmeans extends Configured implements Tool  {
 			int count = 0;
 			for(LongWritable point : values){
 				for (int i = 0; i< n; i++){
-					sum[i] = sum[i] + data.get(point)[i];
+					sum[i] = sum[i] + data.get(Integer.parseInt(new Long(point.get()).toString()))[i];
 				}
 				count++;
 			}
