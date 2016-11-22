@@ -82,6 +82,7 @@ public class Kmeans extends Configured implements Tool  {
 
 	public static class cMapper
 	extends Mapper<LongWritable, Text, LongWritable, LongWritable>{
+		@Override
 		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
 			Long longValue = new Long(Long.parseLong(value.toString().split("\\s+")[1]));
@@ -94,6 +95,7 @@ public class Kmeans extends Configured implements Tool  {
 
 	public static class cReducer
 	extends Reducer<LongWritable, LongWritable, LongWritable, Text> {
+		@Override
 		public void reduce(LongWritable key, Iterable<LongWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
@@ -108,10 +110,11 @@ public class Kmeans extends Configured implements Tool  {
 				}
 				count++;
 			}
-			StringBuilder outString = new StringBuilder("");
+			StringBuilder outString = new StringBuilder();
 			for (int i = 0; i< n; i++){
 				sum[i] = sum[i]/count;
-				outString.append(" 1 " + sum[i].toString());
+				outString.append(" 1 ");
+				outString.append(sum[i].toString());
 			}
 			context.write(key, new Text("Count is: " + count + " " + "Sum 1 is: " + sum[1].toString()+ " Value is : " + outString.toString()));
 		}
