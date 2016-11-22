@@ -94,7 +94,7 @@ public class Kmeans extends Configured implements Tool  {
 	}
 
 	public static class cReducer
-	extends Reducer<LongWritable, LongWritable, LongWritable, DoubleArrayWritable> {
+	extends Reducer<LongWritable, LongWritable, LongWritable, Text> {
 		public void reduce(LongWritable key, Iterable<LongWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
@@ -107,11 +107,13 @@ public class Kmeans extends Configured implements Tool  {
 				}
 				count++;
 			}
+			String outString = "";
 			for (int i = 0; i< n; i++){
 				sum[i] = new DoubleWritable(new Double(sum[i].get())/count);
+				outString = outString + " " + sum[i].get();
 			}
 			outValueWritable.set(sum);
-			context.write(key, outValueWritable);
+			context.write(key, new Text(outString.trim()));
 		}
 	}
 
@@ -197,7 +199,7 @@ public class Kmeans extends Configured implements Tool  {
 			cjob.setMapOutputKeyClass(LongWritable.class);
 			cjob.setMapOutputValueClass(LongWritable.class);
 			cjob.setOutputKeyClass(LongWritable.class);
-			cjob.setOutputValueClass(DoubleArrayWritable.class);
+			cjob.setOutputValueClass(Text.class);
 			FileInputFormat.addInputPath(cjob, new Path("dOutput"+count));
 			FileOutputFormat.setOutputPath(cjob, new Path("cOutput"+count));
 			cjob.waitForCompletion(true);
