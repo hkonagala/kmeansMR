@@ -115,7 +115,7 @@ public class Kmeans extends Configured implements Tool  {
 				) throws IOException, InterruptedException {
 			Double[] sum = new Double[n];
 			for (int i = 0; i< n; i++){
-				sum[i] = 0.0;
+				sum[i] = new Double(0.0);
 			}
 			int count = 0;
 			/*for(LongWritable point : values){
@@ -127,7 +127,8 @@ public class Kmeans extends Configured implements Tool  {
 			String outString = "";
 			for (int i = 0; i< n; i++){
 				//sum[i] = sum[i]/count;
-				outString += " 1 " + sum[i].toString();
+				outString = outString.concat(" 1 ");
+				outString = outString.concat(sum[i].toString());
 			}
 			context.write(key, new Text(outString.toString().trim()));
 		}
