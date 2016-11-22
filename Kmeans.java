@@ -30,30 +30,33 @@ public class Kmeans extends Configured implements Tool  {
 	private static BufferedReader bufferedReader;
 	private BufferedReader br;
 
+	// Own class to pass double array from map to reduce
 	public static class DoubleArrayWritable extends ArrayWritable {
 		public DoubleArrayWritable() {
 			super(DoubleWritable.class);
 		}
 	}
 
+	// distance mapper
+	// Output: key: datapointindex, value: [indexofcentroid distancetothatcentroid]
 	public static class dMapper
 	extends Mapper<LongWritable, Text, LongWritable, DoubleArrayWritable>{
 
+		@Override
 		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
 			int cIndex = Integer.parseInt(value.toString().split("\\s+")[0]);
-			System.out.println(cIndex);
-			System.out.println("*****");
-			System.out.println(value.toString());
+			//loop through all data points
 			for (int i = 0; i< 10000; i++){
 				Double sum = 0.0;
 				for (int j = 0; j< n; j++){
+					// calculate sum of squares
 					sum = sum + Math.pow(data.get(i)[j] - centroids.get(cIndex)[j], 2);
 				}
 				DoubleArrayWritable outValueWritable = new DoubleArrayWritable ();
 				DoubleWritable[] outValue = new DoubleWritable[2];
-				outValue[0] = new DoubleWritable((new Double(cIndex)).doubleValue());
-				outValue[1] = new DoubleWritable(Math.sqrt(sum));
+				outValue[0] = new DoubleWritable((new Double(cIndex)).doubleValue()); // index of the centroid
+				outValue[1] = new DoubleWritable(Math.sqrt(sum));// distance to that centroid
 				outValueWritable.set(outValue);
 				LongWritable outKey = new LongWritable((new Long(i)).longValue());
 				context.write(outKey, outValueWritable);
@@ -116,7 +119,7 @@ public class Kmeans extends Configured implements Tool  {
 				outString.append(" 1 ");
 				outString.append(sum[i].toString());
 			}
-			context.write(key, new Text("Count is: " + count + " " + "Sum 1 is: " + sum[1].toString()+ " Value is : " + outString.toString()));
+			context.write(key, new Text(outString.toString()));
 		}
 	}
 
