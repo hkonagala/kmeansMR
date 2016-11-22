@@ -210,7 +210,7 @@ public class Kmeans extends Configured implements Tool  {
 
 			// Distance calculator job
 			Configuration conf = new Configuration();
-			/*Job djob = Job.getInstance(conf, "distanceMR"+count);
+			Job djob = Job.getInstance(conf, "distanceMR"+count);
 			djob.setJarByClass(Kmeans.class);
 			djob.setMapperClass(dMapper.class);
 			djob.setReducerClass(dReducer.class);
@@ -225,8 +225,8 @@ public class Kmeans extends Configured implements Tool  {
 				// else, read from previous output, basically its the same, as we are only considering indexes.
 				FileInputFormat.addInputPath(djob, new Path("cOutput"+(count-1)));
 			}
-			FileOutputFormat.setOutputPath(djob, new Path("dOutput"+count));
-			djob.waitForCompletion(true);*/
+			FileOutputFormat.setOutputPath(djob, new Path("d1Output"+count));
+			djob.waitForCompletion(true);
 
 			// Second Mapreduce job - to calculate new centroids
 			Job cjob = Job.getInstance(conf, "centroidMR"+count);
@@ -239,7 +239,7 @@ public class Kmeans extends Configured implements Tool  {
 			cjob.setOutputKeyClass(LongWritable.class);
 			cjob.setOutputValueClass(Text.class);
 			// input is output from previous mapreduce distance calculator job
-			FileInputFormat.addInputPath(cjob, new Path("dOutput"+count));
+			FileInputFormat.addInputPath(cjob, new Path("d1Output"+count));
 			FileOutputFormat.setOutputPath(cjob, new Path("cOutput"+count));
 			cjob.waitForCompletion(true);
 
