@@ -70,7 +70,7 @@ public class Kmeans extends Configured implements Tool  {
 				DoubleWritable d = (DoubleWritable) arr.get()[1];
 				if(d.compareTo(min) == -1){
 					min = d;
-					i = (IntWritable) arr.get()[0];
+					i = new IntWritable(new Double(((DoubleWritable)(arr.get()[0])).get()).intValue());
 				}
 			}
 			context.write(key, i);
