@@ -42,14 +42,18 @@ public class Kmeans extends Configured implements Tool  {
 
 		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
+			int cIndex = Integer.parseInt(value.toString().split(" ")[0]);
+			System.out.println(cIndex);
+			System.out.println("*****");
+			System.out.println(value.toString());
 			for (int i = 0; i< 10000; i++){
 				Double sum = 0.0;
 				for (int j = 0; j< n; j++){
-					sum = sum + Math.pow(data.get(i)[j] - centroids.get(key)[j], 2);
+					sum = sum + Math.pow(data.get(i)[j] - centroids.get(cIndex)[j], 2);
 				}
 				DoubleArrayWritable outValueWritable = new DoubleArrayWritable ();
 				DoubleWritable[] outValue = new DoubleWritable[2];
-				outValue[0] = new DoubleWritable((new Double(key.get())).doubleValue());
+				outValue[0] = new DoubleWritable((new Double(cIndex)).doubleValue());
 				outValue[1] = new DoubleWritable(Math.sqrt(sum));
 				outValueWritable.set(outValue);
 				LongWritable outKey = new LongWritable((new Long(i)).longValue());
@@ -81,9 +85,11 @@ public class Kmeans extends Configured implements Tool  {
 	extends Mapper<LongWritable, Text, LongWritable, LongWritable>{
 		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
-			Long longValue = new Long(Long.parseLong(value.toString()));
+			Long longValue = new Long(Long.parseLong(value.toString().split(" ")[1]));
 			LongWritable longWritableValue = new LongWritable(longValue);
-			context.write(longWritableValue, key);
+			Long longValue2 = new Long(Long.parseLong(value.toString().split(" ")[0]));
+			LongWritable longWritableValue2 = new LongWritable(longValue2);
+			context.write(longWritableValue, longWritableValue2);
 		}
 	}
 
