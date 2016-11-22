@@ -42,7 +42,7 @@ public class Kmeans extends Configured implements Tool  {
 
 		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
-			int cIndex = Integer.parseInt(value.toString().split(" ")[0]);
+			int cIndex = Integer.parseInt(value.toString().split("\\s+")[0]);
 			System.out.println(cIndex);
 			System.out.println("*****");
 			System.out.println(value.toString());
@@ -85,9 +85,9 @@ public class Kmeans extends Configured implements Tool  {
 	extends Mapper<LongWritable, Text, LongWritable, LongWritable>{
 		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
-			Long longValue = new Long(Long.parseLong(value.toString().split(" ")[1]));
+			Long longValue = new Long(Long.parseLong(value.toString().split("\\s+")[1]));
 			LongWritable longWritableValue = new LongWritable(longValue);
-			Long longValue2 = new Long(Long.parseLong(value.toString().split(" ")[0]));
+			Long longValue2 = new Long(Long.parseLong(value.toString().split("\\s+")[0]));
 			LongWritable longWritableValue2 = new LongWritable(longValue2);
 			context.write(longWritableValue, longWritableValue2);
 		}
@@ -136,7 +136,7 @@ public class Kmeans extends Configured implements Tool  {
 		int key = 1;
 		while ((strLine = bufferedReader.readLine()) != null)   {
 			// split the line on your splitter(s)
-			String[] splitted = strLine.split(" ");
+			String[] splitted = strLine.split("\\s+");
 			Double[] value = new Double[n];
 			for (int count = 0; count < n; count++){
 				Double d = new Double(Double.parseDouble(splitted[count]));
@@ -212,7 +212,7 @@ public class Kmeans extends Configured implements Tool  {
 
 			String strLine;
 			while ((strLine = this.br.readLine()) != null)   {
-				String[] splitted = strLine.split(" ");
+				String[] splitted = strLine.split("\\s+");
 				Double[] value = new Double[n];
 				for (int j = 0; j < n; j++){
 					Double d = new Double(Double.parseDouble(splitted[j+1]));
