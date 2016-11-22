@@ -174,7 +174,7 @@ public class Kmeans extends Configured implements Tool  {
 			djob.setMapOutputKeyClass(LongWritable.class);
 			djob.setMapOutputValueClass(DoubleArrayWritable.class);
 			djob.setOutputKeyClass(LongWritable.class);
-			djob.setOutputValueClass(DoubleArrayWritable.class);
+			djob.setOutputValueClass(IntWritable.class);
 			if (count == 0){
 				FileInputFormat.addInputPath(djob, new Path("harika/kmeans/centroids"));
 			} else{
@@ -190,7 +190,7 @@ public class Kmeans extends Configured implements Tool  {
 			cjob.setReducerClass(cReducer.class);
 			cjob.setMapOutputKeyClass(LongWritable.class);
 			cjob.setMapOutputValueClass(LongWritable.class);
-			cjob.setOutputKeyClass(IntWritable.class);
+			cjob.setOutputKeyClass(LongWritable.class);
 			cjob.setOutputValueClass(DoubleArrayWritable.class);
 			FileInputFormat.addInputPath(cjob, new Path("dOutput"+count));
 			FileOutputFormat.setOutputPath(cjob, new Path("cOutput"+count));
