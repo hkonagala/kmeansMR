@@ -110,7 +110,8 @@ public class Kmeans extends Configured implements Tool  {
 			String outString = "";
 			for (int i = 0; i< n; i++){
 				sum[i] = new DoubleWritable(new Double(sum[i].get())/count);
-				outString = outString + " " + sum[i].get();
+				outString = outString + " " + (new Double(sum[i].get())).toString();
+				System.out.println("*************Out String is : " + outString);
 			}
 			outValueWritable.set(sum);
 			context.write(key, new Text(outString.trim()));
