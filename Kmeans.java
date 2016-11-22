@@ -124,13 +124,19 @@ public class Kmeans extends Configured implements Tool  {
 				this.logger.error("CREDUCER SUM[i]: "+ sum[i].toString().trim());
 			}
 			int count = 1;
-			/*for(LongWritable point : values){
+			for(LongWritable point : values){
 				for (int i = 0; i< n; i++){
-					sum[i] = sum[i] + data.get(Integer.parseInt(new Long(point.get()).toString()))[i];
-					this.logger.error("CREDUCER SUM[i]/count: "+ sum[i].toString().trim());
+					String dindexstr = new Long(point.get()).toString();
+					this.logger.error("CREDUCER dinedxstr: "+ dindexstr);
+					int dindex = Integer.parseInt(dindexstr);
+					this.logger.error("CREDUCER dindex: "+ dindex);
+					Double d = data.get(dindex)[i];
+					this.logger.error("CREDUCER d: "+ d);
+					sum[i] = sum[i] + d;
+					this.logger.error("CREDUCER d+SUM[i]: "+ sum[i].toString().trim());
 				}
 				count++;
-			}*/
+			}
 			this.logger.error("CREDUCER count: "+ count);
 			StringBuffer outString = new StringBuffer();
 			for (int i = 0; i< n; i++){
