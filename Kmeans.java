@@ -118,6 +118,7 @@ public class Kmeans extends Configured implements Tool  {
 			Double[] sum = new Double[n];
 			for (int i = 0; i< n; i++){
 				sum[i] = new Double(i);
+				this.logger.error("CREDUCER SUM[i]: "+ sum[i].toString().trim());
 			}
 			int count = 0;
 			/*for(LongWritable point : values){
@@ -195,7 +196,7 @@ public class Kmeans extends Configured implements Tool  {
 
 			// Distance calculator job
 			Configuration conf = new Configuration();
-			Job djob = Job.getInstance(conf, "distanceMR"+count);
+			/*Job djob = Job.getInstance(conf, "distanceMR"+count);
 			djob.setJarByClass(Kmeans.class);
 			djob.setMapperClass(dMapper.class);
 			djob.setReducerClass(dReducer.class);
@@ -211,7 +212,7 @@ public class Kmeans extends Configured implements Tool  {
 				FileInputFormat.addInputPath(djob, new Path("cOutput"+(count-1)));
 			}
 			FileOutputFormat.setOutputPath(djob, new Path("dOutput"+count));
-			djob.waitForCompletion(true);
+			djob.waitForCompletion(true);*/
 
 			// Second Mapreduce job - to calculate new centroids
 			Job cjob = Job.getInstance(conf, "centroidMR"+count);
