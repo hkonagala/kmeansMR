@@ -31,7 +31,6 @@ public class Kmeans extends Configured implements Tool  {
 	private static FileReader fileReader;
 	private static BufferedReader bufferedReader;
 	private BufferedReader br;
-	private Logger mainLogger = Logger.getLogger(Kmeans.class);
 
 	// Own class to pass double array from map to reduce
 	public static class DoubleArrayWritable extends ArrayWritable {
@@ -44,7 +43,7 @@ public class Kmeans extends Configured implements Tool  {
 	// Output: key: datapointindex, value: [indexofcentroid distancetothatcentroid]
 	public static class dMapper
 	extends Mapper<LongWritable, Text, LongWritable, DoubleArrayWritable>{
-
+		private Logger logger = Logger.getLogger(dMapper.class);
 		@Override
 		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
@@ -56,6 +55,7 @@ public class Kmeans extends Configured implements Tool  {
 					// calculate sum of squares
 					sum = sum + Math.pow(data.get(i)[j] - centroids.get(cIndex)[j], 2);
 				}
+				this.logger.error("DMAPPER datasize: "+ data.size());
 				DoubleArrayWritable outValueWritable = new DoubleArrayWritable ();
 				DoubleWritable[] outValue = new DoubleWritable[2];
 				outValue[0] = new DoubleWritable((new Double(cIndex)).doubleValue()); // index of the centroid
@@ -122,13 +122,14 @@ public class Kmeans extends Configured implements Tool  {
 			this.logger.error("CREDUCER n: "+ n);
 			for (int i = 0; i< n; i++){
 				sum[i] = new Double(0);
-				this.logger.error("CREDUCER SUM[i]: "+ sum[i].toString().trim());
+				//this.logger.error("CREDUCER SUM[i]: "+ sum[i].toString().trim());
 			}
+			this.logger.error("CREDUCER datasize: "+ data.size());
 			int count = 1;
 			for(LongWritable point : values){
 				for (int i = 0; i< n; i++){
 					String dindexstr = new Long(point.get()).toString();
-					this.logger.error("CREDUCER dinedxstr: "+ dindexstr);
+					//this.logger.error("CREDUCER dinedxstr: "+ dindexstr);
 					int dindex = Integer.parseInt(dindexstr);
 					this.logger.error("CREDUCER dindex: "+ dindex);
 					Double d = data.get(dindex)[i];
