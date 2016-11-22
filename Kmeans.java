@@ -110,7 +110,7 @@ public class Kmeans extends Configured implements Tool  {
 				}
 				count++;
 			}
-			StringBuilder outString = new StringBuilder();
+			StringBuffer outString = new StringBuffer();
 			for (int i = 0; i< n; i++){
 				sum[i] = sum[i]/count;
 				outString.append(" 1 ");
