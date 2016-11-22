@@ -88,6 +88,9 @@ public class Kmeans extends Configured implements Tool  {
 	}
 
 	// Centroid calculator 
+	// input: dreducer output
+	// input: Key: datapointindex, value: centroidindex
+	// output: Key: centroidindex, value: datapointindex
 	public static class cMapper
 	extends Mapper<LongWritable, Text, LongWritable, LongWritable>{
 		@Override
@@ -101,6 +104,9 @@ public class Kmeans extends Configured implements Tool  {
 		}
 	}
 
+	// Centroid Calculator reducer
+	// input: Key: centroidindex, values: [group of datapoints in that cluster]
+	// output: Key: centroidindex, value: [new centroid point value]
 	public static class cReducer
 	extends Reducer<LongWritable, LongWritable, LongWritable, Text> {
 		@Override
@@ -141,6 +147,7 @@ public class Kmeans extends Configured implements Tool  {
 		// load data
 		data = new HashMap<Integer, Double[]>();
 
+		// load the data from file
 		fileReader = new FileReader("mnist_data.txt");
 		bufferedReader = new BufferedReader(fileReader);
 		String strLine = "";
@@ -170,6 +177,7 @@ public class Kmeans extends Configured implements Tool  {
 			for (int j = 0; j<n;j++){
 				centroid[j] = new Double(i+1);
 			}
+			// initialize centroids in the format of <1,1,1,1,....>, <2,2,2,2,....>,....
 			centroids.put(i+1, centroid);
 		}
 		ToolRunner.run(new Configuration(), new Kmeans(), args);
@@ -181,25 +189,27 @@ public class Kmeans extends Configured implements Tool  {
 		boolean isConverged = false;
 		while(!isConverged){
 
-
+			// Distance calculator job
 			Configuration conf = new Configuration();
 			Job djob = Job.getInstance(conf, "distanceMR"+count);
 			djob.setJarByClass(Kmeans.class);
 			djob.setMapperClass(dMapper.class);
-			//djob.setCombinerClass(dReducer.class);
 			djob.setReducerClass(dReducer.class);
 			djob.setMapOutputKeyClass(LongWritable.class);
 			djob.setMapOutputValueClass(DoubleArrayWritable.class);
 			djob.setOutputKeyClass(LongWritable.class);
 			djob.setOutputValueClass(IntWritable.class);
+			// if this is first iteration, read from centroids file
 			if (count == 0){
 				FileInputFormat.addInputPath(djob, new Path("harika/kmeans/centroids"));
 			} else{
+				// else, read from previous output, basically its the same, as we are only considering indexes.
 				FileInputFormat.addInputPath(djob, new Path("cOutput"+(count-1)));
 			}
 			FileOutputFormat.setOutputPath(djob, new Path("dOutput"+count));
 			djob.waitForCompletion(true);
 
+			// Second Mapreduce job - to calculate new centroids
 			Job cjob = Job.getInstance(conf, "centroidMR"+count);
 			cjob.setJarByClass(Kmeans.class);
 			cjob.setMapperClass(cMapper.class);
@@ -209,13 +219,16 @@ public class Kmeans extends Configured implements Tool  {
 			cjob.setMapOutputValueClass(LongWritable.class);
 			cjob.setOutputKeyClass(LongWritable.class);
 			cjob.setOutputValueClass(Text.class);
+			// input is output from previous mapreduce distance calculator job
 			FileInputFormat.addInputPath(cjob, new Path("dOutput"+count));
 			FileOutputFormat.setOutputPath(cjob, new Path("cOutput"+count));
 			cjob.waitForCompletion(true);
 
+			// backup the centroids
 			prev = centroids;
 			centroids = new HashMap<Integer, Double[]>();
 
+			// read the output from the second mapreduce job
 			Path ofile = new Path("cOutput"+count+"/part-r-00000");
 			FileSystem fs = FileSystem.get(new Configuration());
 			this.br = new BufferedReader(new InputStreamReader(
@@ -229,14 +242,17 @@ public class Kmeans extends Configured implements Tool  {
 					Double d = new Double(Double.parseDouble(splitted[j+1]));
 					value[j] = d;
 				}
+				// load the values into centroids variable
 				centroids.put(Integer.parseInt(splitted[0]), value);
 			}
 			this.br.close();
 
+			//check if the clustering is converged?
 			isConverged = true;
 			if (count != 0){
 				for (int i=0; i<k; i++){
 					for (int j = 0; j<n; j++){
+						// if all the centroid values are same, it is converged.
 						if(centroids.get(i)[j] != prev.get(i)[j]){
 							isConverged = false;
 							break;
@@ -248,17 +264,15 @@ public class Kmeans extends Configured implements Tool  {
 				}
 			} else{
 				isConverged = false;
+				// if not converged, repeat the jobs again for new centroids
 			}
 			count++;
 		}
 		// move files from one directory to another
-		/*java.nio.file.Path FROM = Paths.get("cOutput"+count);
-		java.nio.file.Path TO = Paths.get(args[3]);
-		CopyOption[] options = new CopyOption[]{
-				StandardCopyOption.REPLACE_EXISTING,
-				StandardCopyOption.COPY_ATTRIBUTES
-		}; 
-		Files.copy(FROM, TO, options);*/
+		Path FROM = new Path("cOutput"+count);
+		Path TO = new Path(args[3]);
+		FileSystem fs = FileSystem.get(new Configuration());
+		fs.rename(FROM, TO);
 		return 1;
 	}
 }
