@@ -78,10 +78,10 @@ public class Kmeans extends Configured implements Tool  {
 	}
 
 	public static class cMapper
-	extends Mapper<LongWritable, IntWritable, LongWritable, LongWritable>{
-		public void map(LongWritable key, IntWritable value, Context context
+	extends Mapper<LongWritable, Text, LongWritable, LongWritable>{
+		public void map(LongWritable key, Text value, Context context
 				) throws IOException, InterruptedException {
-			Long longValue = (long) value.get();
+			Long longValue = new Long(Long.parseLong(value.toString()));
 			LongWritable longWritableValue = new LongWritable(longValue);
 			context.write(longWritableValue, key);
 		}
