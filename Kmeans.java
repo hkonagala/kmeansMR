@@ -117,6 +117,7 @@ public class Kmeans extends Configured implements Tool  {
 		public void reduce(LongWritable key, Iterable<LongWritable> values,
 				Context context
 				) throws IOException, InterruptedException {
+			n=784;
 			Double[] sum = new Double[n];
 			this.logger.error("CREDUCER n: "+ n);
 			for (int i = 0; i< n; i++){
