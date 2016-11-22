@@ -114,7 +114,7 @@ public class Kmeans extends Configured implements Tool  {
 				sum[i] = sum[i]/count;
 				outString.append(" 1 " + sum[i].toString());
 			}
-			context.write(key, new Text("1 2"));
+			context.write(key, new Text("Count is: " + count + " " + "Sum 1 is: " + sum[1]+ " Value is : " + outString.toString()));
 		}
 	}
 
